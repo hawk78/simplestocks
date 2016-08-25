@@ -1,0 +1,13 @@
+This directory contains the solution itself in simplestock.py
+and an example/demo file in test.py
+
+The code is written in order to be efficient and readable according 
+to my interpretation of the execrcise description.
+
+All computations are done at transaction insert time, but they could be
+just started at insert time and recollected (in a dataflow style) at a
+later time.
+
+The code tries to be side effects free and testable. Simplicity is the 
+overall goal but also decent performances and correct results (up to my
+understanding of trading and the description). 

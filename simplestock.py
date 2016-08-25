@@ -1,5 +1,6 @@
 import statistics as stats
 import math
+import bisect
 
 class CommonStockData:
     def __init__(self, sym, parValue, lastDividend):
@@ -31,6 +32,10 @@ class Transaction:
         self.quantity = quantity
         self.price = price
         self.timestamp = timestamp
+
+    def __lt__(self, other):
+        return self.timestamp < other.timestamp
+
     def  __repr__(self):
         return "([{}] {} {} {}@{})".format(
             self.timestamp,
@@ -48,22 +53,18 @@ class TransactionLog:
 
     def recordTrade(self, transaction):
         sym = transaction.sym
-        self.transactions.insert(0, transaction)
+        self.transactions.append(transaction)
         data = self.indexData.setdefault(transaction.sym, (0,0))
         prc, qty = (transaction.price, transaction.quantity)
         self.indexData[sym] = (data[0] + prc*qty , data[1] + qty)
         return self
 
     def prepareIndex(self, timestamp):
-        en = enumerate(self.transactions)
-        g = (i for (i, tr) in en if tr.timestamp < timestamp)
-        try:
-            first = next( g )
-        except StopIteration:
-            return
-        removedTransactions = self.transactions[first:]
-        self.oldTransactions = removedTransactions + self.oldTransactions
-        self.transactions[first:] = []
+        fakeTr = Transaction("Fake", "SELL", 0, 0, timestamp)
+        first = bisect.bisect_left(self.transactions, fakeTr)
+        removedTransactions = self.transactions[:first]
+        self.oldTransactions += removedTransactions
+        self.transactions[:first] = []
         for tr in removedTransactions: # can be parallelized
             data = self.indexData[tr.sym]
             prc, qty = (tr.price, tr.quantity)
